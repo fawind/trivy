@@ -36,14 +36,24 @@ func NewScanner() Scanner {
 func (s *scanner) Scan(ctx context.Context, target types.ScanTarget, opts types.ScanOptions) (types.Results, error) {
 	apps := target.Applications
 	log.Info("Number of language-specific files", log.Int("num", len(apps)))
+
+	for _, app := range apps {
+		log.Info(">> Language-specific file",
+			log.String("type", string(app.Type)),
+			log.String("file", app.FilePath), log.Int("numPkg", len(app.Packages)))
+	}
+
 	if len(apps) == 0 {
+		log.Info(">> No language-specific files")
 		return nil, nil
 	}
 
 	var results types.Results
 	printedTypes := make(map[ftypes.LangType]struct{})
 	for _, app := range apps {
+		log.Info(">> Scanning language-specific app", log.String("file", app.FilePath), log.String("type", string(app.Type)))
 		if len(app.Packages) == 0 {
+			log.Info(">> No packages found", log.String("file", app.FilePath))
 			continue
 		}
 
@@ -65,9 +75,12 @@ func (s *scanner) Scan(ctx context.Context, target types.ScanTarget, opts types.
 			if err != nil {
 				return nil, err
 			}
+		} else {
+			log.Info(">> Vulnerability scanning is disabled")
 		}
 
 		if len(result.Packages) == 0 && len(result.Vulnerabilities) == 0 {
+			log.Info(">> No results", log.String("file", app.FilePath))
 			continue
 		}
 		results = append(results, result)
